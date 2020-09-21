@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "hello-world.serviceAccountName" . }}-servicemonitor
+  labels:
+    release: prom-operator ## because default value of prometheusoperator
+spec:
+  selector:
+    matchLabels:
+      {{- include "hello-world.labels" . | nindent 6 }}
+  endpoints:
+  - port: http

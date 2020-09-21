@@ -1,0 +1,33 @@
+alertmanager:
+          
+  enabled: true
+
+  apiVersion: v2
+
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+    maxUnavailable: ""
+
+  config:
+    global:
+    receivers:
+      - name: default-receiver
+      - name: infra-webhook
+        webhook_configs:
+          - url: "http://WEBHOOK_URL/webhook"
+    route:
+      group_wait: 10s
+      group_interval: 5m
+      receiver: default-receiver
+      repeat_interval: 3h
+      
+      routes: 
+        - receiver: infra-webhook
+          match_re:
+            opr: scaling
+

@@ -1,0 +1,32 @@
+{{- if .Values.hpa.enabled -}}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "hello-world.fullname" . }}-hpa
+  annotations:
+    metric-config.object.last5min-request.prometheus/per-replica: "true"
+    metric-config.object.last5min-request.prometheus/query: |
+      sum(
+        rate(
+          flask_http_request_duration_seconds_bucket{
+            path="/hi"
+          }[5m]
+        )
+      )
+spec:
+  maxReplicas: 10
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "hello-world.fullname" . }}
+  metrics:
+    - type: Object
+      object:
+        metricName: last5min-request
+        target:
+          apiVersion: v1
+          kind: Pod
+          name: {{ include "hello-world.fullname" . }}
+        targetValue: 20
+{{- end -}}

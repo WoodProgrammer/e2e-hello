@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: prometheus-operator
+    release: prom-operator
+  name: helloworl-alert-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: ./helloworld.rules
+    rules:
+    - alert: HelloWorldAlert
+      expr: sum( rate( flask_http_request_duration_seconds_bucket{ path="/hi" }[5m]))
+      labels:
+        opr: scaling
+        severity: critical
+      annotations:
+        summary: "HelloWorld Application High Load: {{ $value | printf \"%.2f\" }}%"

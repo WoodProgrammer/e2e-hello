@@ -1,0 +1,56 @@
+pipeline {
+  agent {
+    label 'jenkins-runner'
+  }
+
+  environment {
+    registry           = "emirozbir"
+    repository         = "e2e-hello"
+    registry_token     = credentials('docker-token')
+    image_name         = "${env.registry}/${env.repository}"
+    image_tag          = "${env.git_sha}"
+    git_sha            = sh(
+                       script: "printf \$(git rev-parse --short ${GIT_COMMIT})",
+                       returnStdout: true
+    )
+  }
+
+  stages {
+
+    stage('Build image') {
+      steps{
+        sh "echo 'Switching different directory to lower context usage.'"
+        sh "cd application && docker build -t $IMAGE_NAME:$IMAGE_TAG ."
+      }
+    }
+
+    stage('Scan image') {
+      steps{
+        sh "wget -q https://github.com/aquasecurity/trivy/releases/download/v0.5.4/trivy_0.5.4_Linux-64bit.tar.gz && tar -xvf trivy_0.5.4_Linux-64bit.tar.gz"
+        sh "./trivy $IMAGE_NAME:$IMAGE_TAG"
+        //blocker
+        //sh "./trivy -s HIGH --exit-code 1 $IMAGE_NAME:$IMAGE_TAG"
+      }
+    }
+
+
+    stage('Push Image') {
+      steps{
+        sh "docker login -u $REGISTRY -p $REGISTRY_TOKEN"
+        sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+        script {
+          if ('$GIT_BRANCH'.equals('master')) {
+            sh "docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:master"
+            sh "docker push $IMAGE_NAME:master"
+          }
+        }
+      }
+    }
+
+    stage('Remove Images after pushed to registry') {
+      steps{
+        sh "docker rmi $IMAGE_NAME:$IMAGE_TAG"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+
+master:
+  sidecars:
+    configAutoReload:
+      enabled: false
+  javaopts: "-Xms512m -Xmx512m"
+  resources:
+    requests:
+      cpu: "512m"
+      memory: "512Mi"
+    limits:
+      cpu: "512m"
+      memory: "2048Mi"
+  installPlugins:
+    - kubernetes
+    - workflow-job
+    - workflow-aggregator
+    - credentials-binding
+    - git
+    - kubernetes-client-api
+    - kubernetes-credentials
+    - configuration-as-code
+  ingress:
+    enabled: true
+    apiVersion: networking.k8s.io/v1beta1
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+agent:
+  enabled: true
+  image: jenkins/jnlp-slave
+  imageTag: 3.10-1
+  customjenkinslabels: []
+  component: "jenkins-slave"
+  privileged: false
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "512m"
+      memory: "1024Mi"
+      
+rbac:
+  install: false
+  serviceAccount:
+    name: default
+  apiVersion: v1
